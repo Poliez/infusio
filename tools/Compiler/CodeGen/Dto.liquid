@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 
 using LanguageExt;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Infusio.Model
 {
@@ -15,7 +16,8 @@ namespace Infusio.Model
       /// {Description}
       /// </summary>
       {% endif %}
-      public enum {{ e.Name | normalize }}
+      [JsonConverter(typeof(StringEnumConverter))]
+      public enum {{e.ParentType | normalize}}{{ e.Name | normalize }}
       { {% for value in e.Values %}
         [EnumMember(Value = "{{ value }}")]
         {{ value | enummember }}{% if forloop.last == false %},{% endif %}
@@ -28,17 +30,17 @@ namespace Infusio.Model
     {
       {% for prop in def.Properties -%}
       [JsonProperty("{{ prop.JsonProperty }}")]
-      public readonly {{ prop.OptionalTypeName }} {{ prop.Name | normalize }};
+      public readonly {% if prop.IsEnum -%}{{prop.ParentType | normalize}}{% endif %}{{ prop.OptionalTypeName }} {{ prop.Name | normalize }};
       {% endfor -%}
 
-      public {{ def.Name | normalize }}({% for prop in def.Properties -%}{{ prop.OptionalTypeName }} {{ prop.VariableName }} = default{% if forloop.last == false %}, {% endif %}{% endfor %})
+      public {{ def.Name | normalize }}({% for prop in def.Properties -%}{% if prop.IsEnum -%}{{prop.ParentType | normalize}}{% endif %}{{ prop.OptionalTypeName }} {{ prop.VariableName }} = default{% if forloop.last == false %}, {% endif %}{% endfor %})
       {
         {% for prop in def.Properties -%}
         {{ prop.Name | normalize }} = {{ prop.VariableName }};
         {% endfor %}
       }
 
-      public {{ def.Name | normalize }} Copy({% for prop in def.Properties -%}{{ prop.OptionalTypeName }} {{ prop.VariableName }} = default{% if forloop.last == false %}, {% endif %}{% endfor %}) => new {{ def.Name | normalize }}(
+      public {{ def.Name | normalize }} Copy({% for prop in def.Properties -%}{% if prop.IsEnum -%}{{prop.ParentType | normalize}}{% endif %}{{ prop.OptionalTypeName }} {{ prop.VariableName }} = default{% if forloop.last == false %}, {% endif %}{% endfor %}) => new {{ def.Name | normalize }}(
       {% for prop in def.Properties -%}
       {% if prop.IsOptionalType -%}
       {{ prop.VariableName }}:  {{ prop.VariableName }} ?? {{ prop.Name | normalize }}{% if forloop.last == false %}, {% endif %}

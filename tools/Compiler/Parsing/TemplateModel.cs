@@ -14,7 +14,6 @@ namespace Infusio.Compiler.Parsing
 
         // Handle enum values not documented in the swaggerdoc:
         private Map<string, Lst<string>> _extraEnumMembers = Map(
-            ("Field", List("EMAIL1", "PHONE1", "PHONE2")),
             ("EmailStatus", List("SingleOptIn"))
         );
 
@@ -25,7 +24,7 @@ namespace Infusio.Compiler.Parsing
             )
             .Filter(x => x.IsEnum)
             .Map(x => new EnumModel(x.Name, x.Enum.Append(_extraEnumMembers.Find(x.Name).IfNone(Lst<string>.Empty)),
-                x.Description))
+                x.Description, x.ParentType))
             .Fold(HashSet<EnumModel.NameEq, EnumModel>(), (set, model) => set.TryAdd(model))
             .ToSeq();
 
